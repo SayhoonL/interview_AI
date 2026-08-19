@@ -91,6 +91,7 @@ export async function findSimilarCanonicalQuestion(
         `
         SELECT
             id,
+            canonical_question,
             enhanced_question,
             category,
             1 - (embedding <=> $1::vector) AS similarity_score
