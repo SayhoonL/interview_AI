@@ -1,16 +1,48 @@
 import { pool } from "./db/client";
+import {
+    createCanonicalQuestion,
+    createRawQuestion,
+    findQuestionMappingByNormalizedQuestion
+} from "./repositories/questionRepository";
+import { normalizeQuestion } from "./utils/normalizeQuestion";
 
 async function main() {
     try {
-        const result = await pool.query("SELECT NOW()");
+        const input = "   INTRODUCE Yourself!!!   ";
 
-        console.log("Database connected!");
-        console.log("Database time:", result.rows[0]);
+        const normalized = normalizeQuestion(input);
 
-        await pool.end();
+        console.log("Raw input:", input);
+        console.log("Normalized:", normalized);
+
+        const existing =
+            await findQuestionMappingByNormalizedQuestion(normalized);
+
+        if (existing) {
+            console.log("Exact duplicate found!");
+            console.log(existing);
+            return;
+        }
+
+        const canonical = await createCanonicalQuestion(
+            "Tell me about yourself and walk me through your past experience.",
+            "BEHAVIORAL"
+        );
+
+        const raw = await createRawQuestion(
+            input,
+            normalized,
+            canonical.id,
+            1
+        );
+
+        console.log("New question created:");
+        console.log(raw);
     } catch (error) {
-        console.error("Database connection failed:");
+        console.error("Error:");
         console.error(error);
+    } finally {
+        await pool.end();
     }
 }
 
