@@ -1,3 +1,17 @@
-const message: string = "Interview AI backend is running";
+import { pool } from "./db/client";
 
-console.log(message);
+async function main() {
+    try {
+        const result = await pool.query("SELECT NOW()");
+
+        console.log("Database connected!");
+        console.log("Database time:", result.rows[0]);
+
+        await pool.end();
+    } catch (error) {
+        console.error("Database connection failed:");
+        console.error(error);
+    }
+}
+
+main();
