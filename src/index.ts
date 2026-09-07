@@ -1,18 +1,12 @@
-import { pool } from "./db/client";
-import { processQuestion } from "./services/questionService";
+import { verifyDuplicate } from "./services/duplicateVerificationService";
 
 async function main() {
-    try {
-        const result = await processQuestion(
-            "What is the difference between a process and a thread?"
-        );
-
-        console.log(result);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        await pool.end();
-    }
+  console.log(
+    await verifyDuplicate(
+    "Tell me about yourself",
+    "Introduce yourself"
+    )
+  );
 }
 
 main();

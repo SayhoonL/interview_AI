@@ -1,7 +1,7 @@
 import { normalizeQuestion } from "../utils/normalizeQuestion";
 import { generateEmbedding } from "./embeddingService";
 import { enhanceQuestion } from "./questionEnhancementService";
-
+import { verifyDuplicate } from "./duplicateVerificationService";
 import {
     findQuestionMappingByNormalizedQuestion,
     findSimilarCanonicalQuestion,
@@ -39,20 +39,26 @@ export async function processQuestion(input: string) {
         semanticMatch &&
         Number(semanticMatch.similarity_score) >= SIMILARITY_THRESHOLD
     ) {
-        // Save this new raw phrasing mapped to existing canonical question
-        await createRawQuestion(
+        const isVerifiedDuplicate = await verifyDuplicate(
             input,
-            normalized,
-            semanticMatch.id,
-            Number(semanticMatch.similarity_score)
+            semanticMatch.canonical_question
         );
 
-        return {
-            duplicate: true,
-            matchType: "SEMANTIC",
-            similarityScore: Number(semanticMatch.similarity_score),
-            canonicalQuestion: semanticMatch
-        };
+        if (isVerifiedDuplicate) {
+            await createRawQuestion(
+                input,
+                normalized,
+                semanticMatch.id,
+                Number(semanticMatch.similarity_score)
+            );
+
+            return {
+                duplicate: true,
+                matchType: "SEMANTIC",
+                similarityScore: Number(semanticMatch.similarity_score),
+                canonicalQuestion: semanticMatch
+            };
+        }
     }
 
     // 5. No duplicate found → ask Claude to process it

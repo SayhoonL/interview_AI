@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
+    "evaluate:dedup": "tsx src/evaluation/dedupEvaluation.ts",
     "build:lambda": "esbuild src/handlers/createQuestionHandler.ts src/handlers/getQuestionsHandler.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist/lambda"
   },
   "keywords": [],
