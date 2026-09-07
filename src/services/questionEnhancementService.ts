@@ -78,10 +78,11 @@ Return ONLY valid JSON using this format:
         throw new Error("Claude returned no response");
     }
 
-    const cleanedText = text
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
+    const match = text.match(/\{[\s\S]*\}/);
 
-    return JSON.parse(cleanedText) as EnhancedQuestionResult;
+    if (!match) {
+        throw new Error(`Claude enhancement response had no JSON: ${text}`);
+    }
+
+    return JSON.parse(match[0]) as EnhancedQuestionResult;
 }

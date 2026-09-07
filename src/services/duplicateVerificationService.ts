@@ -50,7 +50,7 @@ Be careful with questions that use similar wording but ask opposite or different
     ],
 
     inferenceConfig: {
-      maxTokens: 50,
+      maxTokens: 300,
       temperature: 0
     }
   });
@@ -64,12 +64,15 @@ Be careful with questions that use similar wording but ask opposite or different
     throw new Error("Claude returned no duplicate verification result");
   }
 
-  const cleaned = text
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
+  const match = text.match(/\{[\s\S]*\}/);
 
-  const parsed = JSON.parse(cleaned);
+  if (!match) {
+    throw new Error(
+      `Claude duplicate verification response had no JSON: ${text}`
+    );
+  }
+
+  const parsed = JSON.parse(match[0]);
 
   return parsed.duplicate === true;
 }

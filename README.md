@@ -26,9 +26,8 @@ If the question is new, the system:
 
 ```mermaid
 flowchart TD
-    A[Client] --> B[Amazon Cognito]
-    B -->|JWT| C[API Gateway HTTP API]
-    C -->|JWT validation + throttling| D1[POST /questions Lambda]
+    A[Client] --> C[API Gateway HTTP API]
+    C -->|throttling| D1[POST /questions Lambda]
     C --> D2[GET /questions Lambda]
 
     D1 --> E[Question Processing Service]
@@ -66,8 +65,6 @@ flowchart TD
 
 ### API and Security
 - Amazon API Gateway HTTP API
-- Amazon Cognito
-- JWT authorization
 - API Gateway throttling
 - TLS
 - IAM least-privilege roles
@@ -116,7 +113,7 @@ Possible match types:
 
 Returns stored raw-to-canonical question mappings.
 
-Both routes require a valid Cognito JWT.
+Both routes are public and do not require authentication.
 
 ## Deduplication Strategy
 
@@ -390,18 +387,6 @@ The Lambda execution role can:
 - invoke Bedrock
 - connect to Aurora specifically as `interview_app`
 
-### API Authentication
-
-Amazon Cognito issues JWTs.
-
-API Gateway validates the JWT before invoking Lambda.
-
-Without a valid token:
-
-```text
-API Gateway → 401 Unauthorized
-```
-
 ### Rate Limiting
 
 API Gateway is configured with:
@@ -415,7 +400,11 @@ This protects the API and limits unexpected Bedrock usage.
 
 ### TLS
 
-Database traffic is encrypted with TLS and Lambda is configured to verify the Amazon RDS certificate chain.
+Database traffic is encrypted with TLS. Lambda does not currently verify the Aurora certificate against a trusted CA bundle (`rejectUnauthorized: false`), since the correct Amazon RDS CA bundle is not yet packaged with the Lambda deployment. The connection is still encrypted in transit, but the server identity is not verified.
+
+### No Authentication on the API
+
+`POST /questions` and `GET /questions` do not require authentication. The only protection against abuse is the API Gateway rate limit described above.
 
 ## Infrastructure as Code
 
@@ -425,9 +414,6 @@ Terraform manages:
 - Lambda IAM role and policies
 - API Gateway HTTP API
 - API routes and integrations
-- Cognito user pool
-- Cognito app client
-- JWT authorizer
 - API throttling
 - Lambda permissions
 - application packaging
@@ -533,6 +519,8 @@ Embeddings + pgvector provide efficient candidate retrieval, while Claude is res
 - Bedrock `InvokeModel` IAM access can be narrowed further to specific model and inference-profile ARNs.
 - The project currently exposes only question creation and question-list endpoints.
 - Production-scale observability and alerting could be expanded.
+- The API has no authentication or authorization; it relies solely on API Gateway throttling.
+- The Aurora TLS connection does not verify the server certificate chain.
 
 ## Future Improvements
 
@@ -547,6 +535,8 @@ Embeddings + pgvector provide efficient candidate retrieval, while Claude is res
 - automated integration tests
 - CI/CD pipeline
 - narrower Bedrock IAM resource permissions
+- API authentication/authorization (e.g. API keys or Cognito)
+- bundle the correct Amazon RDS CA certificate and re-enable TLS certificate verification
 
 ## Summary
 

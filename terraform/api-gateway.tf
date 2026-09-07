@@ -1,6 +1,13 @@
 resource "aws_apigatewayv2_api" "interview_ai" {
   name          = "interview-ai-api"
   protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = var.frontend_origins
+    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_headers = ["Content-Type", "Authorization"]
+    max_age       = 300
+  }
 }
 
 resource "aws_apigatewayv2_integration" "create_question" {
@@ -29,8 +36,7 @@ resource "aws_apigatewayv2_route" "create_question" {
   route_key = "POST /questions"
   target    = "integrations/${aws_apigatewayv2_integration.create_question.id}"
 
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "get_questions" {
@@ -39,8 +45,7 @@ resource "aws_apigatewayv2_route" "get_questions" {
   route_key = "GET /questions"
   target    = "integrations/${aws_apigatewayv2_integration.get_questions.id}"
 
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
