@@ -1,45 +1,51 @@
 import { pool } from "./db/client";
+import { generateEmbedding } from "./services/embeddingService";
 import {
     createCanonicalQuestion,
-    createRawQuestion,
-    findQuestionMappingByNormalizedQuestion
+    findSimilarCanonicalQuestion
 } from "./repositories/questionRepository";
-import { normalizeQuestion } from "./utils/normalizeQuestion";
 
 async function main() {
     try {
-        const input = "   INTRODUCE Yourself!!!   ";
+        const canonicalQuestion = "Tell me about yourself";
 
-        const normalized = normalizeQuestion(input);
+        const enhancedQuestion =
+            "Tell me about yourself and walk me through your past experience.";
 
-        console.log("Raw input:", input);
-        console.log("Normalized:", normalized);
-
-        const existing =
-            await findQuestionMappingByNormalizedQuestion(normalized);
-
-        if (existing) {
-            console.log("Exact duplicate found!");
-            console.log(existing);
-            return;
-        }
+        const canonicalEmbedding =
+            await generateEmbedding(canonicalQuestion);
 
         const canonical = await createCanonicalQuestion(
-            "Tell me about yourself and walk me through your past experience.",
-            "BEHAVIORAL"
+            canonicalQuestion,
+            enhancedQuestion,
+            "BEHAVIORAL",
+            canonicalEmbedding
         );
 
-        const raw = await createRawQuestion(
-            input,
-            normalized,
-            canonical.id,
-            1
-        );
+        console.log("Created canonical question:");
+        console.log(canonical);
 
-        console.log("New question created:");
-        console.log(raw);
+    const testInputs = [
+        "Introduce yourself",
+        "Can you tell me about yourself?",
+        "Give me a quick introduction about yourself",
+        "What are your greatest strengths?",
+        "Design a URL shortener",
+        "Why do you want to work here?"
+    ];
+
+    for (const testInput of testInputs) {
+        const testEmbedding = await generateEmbedding(testInput);
+
+        const match =
+            await findSimilarCanonicalQuestion(testEmbedding);
+
+        console.log("\nInput:", testInput);
+        console.log("Similarity:", match?.similarity_score);
+    }
+
+
     } catch (error) {
-        console.error("Error:");
         console.error(error);
     } finally {
         await pool.end();

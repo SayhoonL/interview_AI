@@ -1,8 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE canonical_questions (
+CREATE TABLE IF NOT EXISTS canonical_questions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    canonical_question TEXT NOT NULL,
     enhanced_question TEXT NOT NULL,
     category VARCHAR(100),
     embedding VECTOR(1024),

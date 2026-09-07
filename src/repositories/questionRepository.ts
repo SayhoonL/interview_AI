@@ -1,19 +1,30 @@
 import { pool } from "../db/client";
 
 export async function createCanonicalQuestion(
+    canonicalQuestion: string,
     enhancedQuestion: string,
-    category: string
+    category: string,
+    embedding: number[]
 ) {
+    const vector = `[${embedding.join(",")}]`;
+
     const result = await pool.query(
         `
         INSERT INTO canonical_questions (
+            canonical_question,
             enhanced_question,
-            category
+            category,
+            embedding
         )
-        VALUES ($1, $2)
+        VALUES ($1, $2, $3, $4::vector)
         RETURNING *
         `,
-        [enhancedQuestion, category]
+        [
+            canonicalQuestion,
+            enhancedQuestion,
+            category,
+            vector
+        ]
     );
 
     return result.rows[0];
@@ -67,6 +78,28 @@ export async function findQuestionMappingByNormalizedQuestion(
         LIMIT 1
         `,
         [normalizedQuestion]
+    );
+
+    return result.rows[0] ?? null;
+}
+export async function findSimilarCanonicalQuestion(
+    embedding: number[]
+) {
+    const vector = `[${embedding.join(",")}]`;
+
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            enhanced_question,
+            category,
+            1 - (embedding <=> $1::vector) AS similarity_score
+        FROM canonical_questions
+        WHERE embedding IS NOT NULL
+        ORDER BY embedding <=> $1::vector
+        LIMIT 1
+        `,
+        [vector]
     );
 
     return result.rows[0] ?? null;
