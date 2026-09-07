@@ -1,22 +1,13 @@
-import { handler } from "./handlers/getQuestionsHandler";
 import { pool } from "./db/client";
+import { processQuestion } from "./services/questionService";
 
 async function main() {
     try {
-        const response = await handler({} as any);
+        const result = await processQuestion(
+            "What is the difference between a process and a thread?"
+        );
 
-        console.log("Status:", response.statusCode);
-
-        if (
-            typeof response === "object" &&
-            response !== null &&
-            "body" in response &&
-            response.body
-        ) {
-            console.log(
-                JSON.parse(response.body as string)
-            );
-        }
+        console.log(result);
     } catch (error) {
         console.error(error);
     } finally {
