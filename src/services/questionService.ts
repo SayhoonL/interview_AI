@@ -82,7 +82,16 @@ export async function processQuestion(input: string) {
         duplicate: false,
         matchType: null,
         similarityScore: null,
-        canonicalQuestion: canonical,
-        rawQuestion: raw
+        canonicalQuestion: {
+            id: canonical.id,
+            canonicalQuestion: canonical.canonical_question,
+            enhancedQuestion: canonical.enhanced_question,
+            category: canonical.category
+        },
+        rawQuestion: {
+            id: raw.id,
+            rawQuestion: raw.raw_question,
+            normalizedQuestion: raw.normalized_question
+        }
     };
 }

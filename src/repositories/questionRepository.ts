@@ -105,3 +105,24 @@ export async function findSimilarCanonicalQuestion(
 
     return result.rows[0] ?? null;
 }
+
+export async function getAllQuestionMappings() {
+    const result = await pool.query(`
+        SELECT
+            r.id AS raw_id,
+            r.raw_question,
+            r.normalized_question,
+            r.similarity_score,
+            r.created_at,
+            c.id AS canonical_id,
+            c.canonical_question,
+            c.enhanced_question,
+            c.category
+        FROM raw_questions r
+        JOIN canonical_questions c
+            ON r.canonical_question_id = c.id
+        ORDER BY r.created_at DESC
+    `);
+
+    return result.rows;
+}
