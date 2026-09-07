@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "build:lambda": "esbuild src/handlers/createQuestionHandler.ts src/handlers/getQuestionsHandler.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist/lambda"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.163",
     "@types/node": "^26.4.1",
-    "@types/pg": "^8.23.1"
+    "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2"
   }
 }
