@@ -11,6 +11,9 @@ const user = process.env.DB_USER!;
 
 const useIam = process.env.DB_AUTH_MODE === "iam";
 
+const verifySsl =
+    process.env.DB_SSL_VERIFY === "true";
+
 const signer = useIam
     ? new Signer({
         region: process.env.AWS_REGION || "us-east-1",
@@ -32,7 +35,7 @@ export const pool = new Pool({
 
     ssl: useIam
         ? {
-            rejectUnauthorized: false
+            rejectUnauthorized: verifySsl
         }
         : undefined
 });

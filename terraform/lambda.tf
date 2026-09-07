@@ -52,6 +52,7 @@ resource "aws_iam_role_policy" "lambda_database" {
 
     Statement = [{
       Effect = "Allow"
+
       Action = [
         "rds-db:connect"
       ]
@@ -97,11 +98,13 @@ resource "aws_lambda_function" "create_question" {
 
   environment {
     variables = {
-      DB_HOST      = data.aws_rds_cluster.aurora.endpoint
-      DB_PORT      = "5432"
-      DB_NAME      = "interview_ai"
-      DB_USER      = "interview_app"
-      DB_AUTH_MODE = "iam"
+      DB_HOST             = data.aws_rds_cluster.aurora.endpoint
+      DB_PORT             = "5432"
+      DB_NAME             = "interview_ai"
+      DB_USER             = "interview_app"
+      DB_AUTH_MODE        = "iam"
+      DB_SSL_VERIFY       = "true"
+      NODE_EXTRA_CA_CERTS = "/var/runtime/ca-cert.pem"
     }
   }
 
@@ -127,11 +130,13 @@ resource "aws_lambda_function" "get_questions" {
 
   environment {
     variables = {
-      DB_HOST      = data.aws_rds_cluster.aurora.endpoint
-      DB_PORT      = "5432"
-      DB_NAME      = "interview_ai"
-      DB_USER      = "interview_app"
-      DB_AUTH_MODE = "iam"
+      DB_HOST             = data.aws_rds_cluster.aurora.endpoint
+      DB_PORT             = "5432"
+      DB_NAME             = "interview_ai"
+      DB_USER             = "interview_app"
+      DB_AUTH_MODE        = "iam"
+      DB_SSL_VERIFY       = "true"
+      NODE_EXTRA_CA_CERTS = "/var/runtime/ca-cert.pem"
     }
   }
 
