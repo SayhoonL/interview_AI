@@ -1,15 +1,21 @@
 import { normalizeQuestion } from "../utils/normalizeQuestion";
 import { generateEmbedding } from "./embeddingService";
+import { enhanceQuestion } from "./questionEnhancementService";
+
 import {
     findQuestionMappingByNormalizedQuestion,
-    findSimilarCanonicalQuestion
+    findSimilarCanonicalQuestion,
+    createCanonicalQuestion,
+    createRawQuestion
 } from "../repositories/questionRepository";
 
 const SIMILARITY_THRESHOLD = 0.5;
 
 export async function processQuestion(input: string) {
+    // 1. Normalize input
     const normalized = normalizeQuestion(input);
 
+    // 2. Cheap exact duplicate check
     const exactMatch =
         await findQuestionMappingByNormalizedQuestion(normalized);
 
@@ -22,15 +28,25 @@ export async function processQuestion(input: string) {
         };
     }
 
-    const embedding = await generateEmbedding(normalized);
+    // 3. Generate embedding for the raw question
+    const inputEmbedding = await generateEmbedding(normalized);
 
+    // 4. Search pgvector for semantically similar question
     const semanticMatch =
-        await findSimilarCanonicalQuestion(embedding);
+        await findSimilarCanonicalQuestion(inputEmbedding);
 
     if (
         semanticMatch &&
         Number(semanticMatch.similarity_score) >= SIMILARITY_THRESHOLD
     ) {
+        // Save this new raw phrasing mapped to existing canonical question
+        await createRawQuestion(
+            input,
+            normalized,
+            semanticMatch.id,
+            Number(semanticMatch.similarity_score)
+        );
+
         return {
             duplicate: true,
             matchType: "SEMANTIC",
@@ -39,13 +55,34 @@ export async function processQuestion(input: string) {
         };
     }
 
+    // 5. No duplicate found → ask Claude to process it
+    const enhanced = await enhanceQuestion(input);
+
+    // 6. Generate embedding from SHORT canonical question
+    const canonicalEmbedding =
+        await generateEmbedding(enhanced.canonicalQuestion);
+
+    // 7. Save new canonical question
+    const canonical = await createCanonicalQuestion(
+        enhanced.canonicalQuestion,
+        enhanced.enhancedQuestion,
+        enhanced.category,
+        canonicalEmbedding
+    );
+
+    // 8. Save raw question mapping
+    const raw = await createRawQuestion(
+        input,
+        normalized,
+        canonical.id,
+        null
+    );
+
     return {
         duplicate: false,
         matchType: null,
-        similarityScore:
-            semanticMatch
-                ? Number(semanticMatch.similarity_score)
-                : null,
-        canonicalQuestion: null
+        similarityScore: null,
+        canonicalQuestion: canonical,
+        rawQuestion: raw
     };
 }

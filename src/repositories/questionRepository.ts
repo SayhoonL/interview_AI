@@ -34,7 +34,7 @@ export async function createRawQuestion(
     rawQuestion: string,
     normalizedQuestion: string,
     canonicalQuestionId: string,
-    similarityScore: number
+    similarityScore: number | null
 ) {
     const result = await pool.query(
         `
